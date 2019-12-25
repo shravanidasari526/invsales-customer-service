@@ -1,16 +1,26 @@
 package com.invsales.customer.resource;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import com.invsales.customer.domain.Customer;
+import com.invsales.customer.domain.Orders;
 import com.invsales.customer.service.CustomerService;
 import com.invsales.customer.serviceimpl.CustomerServiceImpl;
 
@@ -21,6 +31,12 @@ public class CustomerResource {
 	
 	@Autowired
 	private CustomerService customerService;
+	
+	@Autowired
+	private RestTemplate restTemplate;
+	
+	@Value("${service.orders.uri}")
+	private String ordersServiceUri;
 	
 	@PostMapping("/create")
 	public void createCustomer(@RequestBody Customer customer) {
@@ -39,4 +55,13 @@ public class CustomerResource {
 		return customer;
 	}
 
+	@GetMapping("/findOrders/{customerId}")
+	public List<Orders> findOrdersByCustomerId(@PathVariable String customerId) {
+		//String requestUri = "http://localhost:8083/orders/findByCustomerId/{customerId}";
+		Map<String, String> urlParameters = new HashMap<>();
+		urlParameters.put("customerId", customerId);
+		ResponseEntity<Orders[]> entity = restTemplate.getForEntity(ordersServiceUri, Orders[].class, urlParameters);
+		return entity.getBody() != null ? Arrays.asList(entity.getBody()) : Collections.emptyList();
+
+	}
 }
